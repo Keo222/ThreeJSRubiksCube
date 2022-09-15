@@ -68,6 +68,11 @@ export const outerCubesInfo: { faces: TSixBooleans; pos: TPosition }[] = [
 ];
 
 const cubeGeometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+cubeGeometry.boundingSphere = new THREE.Sphere(
+  new THREE.Vector3(0, 0, 0),
+  0.5
+);
+cubeGeometry.computeBoundingSphere();
 
 export function createAndAttachCubes(
   cubes: { faces: TSixBooleans; pos: TPosition }[],
@@ -89,6 +94,5 @@ function makeCubeMaterials(faces: TSixBooleans) {
       return new THREE.MeshBasicMaterial({ color: 0x000000 });
     }
   });
-  console.log(materials);
   return materials;
 }
