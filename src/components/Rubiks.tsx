@@ -1,5 +1,6 @@
 import React, { useState, useLayoutEffect, useEffect } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 // Functions
 import { resizeRendererToDisplaySize } from "utils/functions";
@@ -9,28 +10,49 @@ import { outerCubesInfo, createAndAttachCubes } from "utils/RubiksHelpers";
 import { Canvas } from "styled/canvas";
 
 const Rubiks = () => {
-  const [xTurn, setXTurn] = useState(0);
-  const [yTurn, setYTurn] = useState(0);
+  const [pos, setPos] = useState({ x: 0, y: 0, z: 0 });
 
   function handleArrowKeys(e: KeyboardEvent) {
-    // e.stopPropagation();
     if (e.key === "ArrowUp") {
-      setXTurn((oldX) => oldX - 0.5);
-      console.log("UP");
+      setPos((oldState) => {
+        return { ...oldState, x: oldState.x - 0.5 };
+      });
     } else if (e.key === "ArrowDown") {
-      setXTurn((oldX) => oldX + 0.5);
-      console.log("DOWN");
+      setPos((oldState) => {
+        return { ...oldState, x: oldState.x + 0.5 };
+      });
     } else if (e.key === "ArrowLeft") {
-      setYTurn((oldY) => oldY + 0.5);
-      console.log("LEFT");
+      setPos((oldState) => {
+        if (oldState.x % 2 === 0) {
+          return { ...oldState, y: oldState.y - 0.5 };
+        } else if (oldState.x % 1 === 0) {
+          return { ...oldState, y: oldState.y + 0.5 };
+        } else {
+          return { ...oldState, z: oldState.z - 0.5 };
+        }
+      });
     } else if (e.key === "ArrowRight") {
-      setYTurn((oldY) => oldY - 0.5);
-      console.log("RIGHT");
+      setPos((oldState) => {
+        if (oldState.x % 2 === 0) {
+          return { ...oldState, y: oldState.y + 0.5 };
+        } else if (oldState.x % 1 === 0) {
+          return { ...oldState, z: oldState.z - 0.5 };
+        } else {
+          return { ...oldState, z: oldState.z + 0.5 };
+        }
+      });
+    } else if (e.key === "a") {
+      setPos((oldState) => {
+        return { ...oldState, z: oldState.z + 0.5 };
+      });
+    } else if (e.key === "d") {
+      setPos((oldState) => {
+        return { ...oldState, z: oldState.z - 0.5 };
+      });
     }
   }
 
   useEffect(() => {
-    // const canvas = document.querySelector("#c") as HTMLCanvasElement;
     document.addEventListener("keyup", handleArrowKeys);
 
     return () => {
@@ -48,6 +70,10 @@ const Rubiks = () => {
     // Scene
     const scene = new THREE.Scene();
 
+    // DEBUG AXES HELPER
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
     // Camera
     const fov = 80;
     const aspect = 2;
@@ -59,9 +85,6 @@ const Rubiks = () => {
     camera.position.z = 6;
     camera.lookAt(scene.position);
 
-    // Cube List
-    const cubes: THREE.Mesh[] = [];
-
     // Cube Geometry
     const cubeGeometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
 
@@ -72,10 +95,12 @@ const Rubiks = () => {
 
     const centerCube = new THREE.Mesh(cubeGeometry, centerMaterial);
     scene.add(centerCube);
-    cubes.push(centerCube);
 
     // Additional Cubes
     createAndAttachCubes(outerCubesInfo, centerCube);
+
+    // Orbit Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
 
     // Render
     const render = (time: number) => {
@@ -86,8 +111,9 @@ const Rubiks = () => {
         camera.updateProjectionMatrix();
       }
 
-      cubes[0].rotation.x = (xTurn % 2) * Math.PI;
-      cubes[0].rotation.y = (yTurn % 2) * Math.PI;
+      scene.rotation.x = (pos.x % 2) * Math.PI;
+      scene.rotation.y = (pos.y % 2) * Math.PI;
+      scene.rotation.z = (pos.z % 2) * Math.PI;
       // cubes[0].rotation.x = 0 * Math.PI;
       // cubes[0].rotation.y = 0 * Math.PI;
 
@@ -96,7 +122,7 @@ const Rubiks = () => {
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);
-  }, [xTurn, yTurn]);
+  }, [pos]);
   return (
     <>
       <Canvas id="c" />
